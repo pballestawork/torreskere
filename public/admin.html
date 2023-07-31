@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Panel de Admin</title>
+    <link rel="stylesheet" type="text/css" href="css/admin.css">
+
+</head>
+<body>
+    <h1>Bienvenido, admin</h1>
+
+    <h2>Registrar nuevo usuario</h2>
+    <form id="register-form">
+        <label for="username">Usuario:</label><br>
+        <input type="text" id="username" name="username" required><br>
+        <label for="password">Contraseña:</label><br>
+        <input type="password" id="password" name="password" required><br>
+        <input type="submit" value="Registrar">
+    </form>
+
+    <button onclick="location.href='/logout'">Cerrar sesión</button>
+
+    <script src="/static/admin.js"></script>
+</body>
+</html>

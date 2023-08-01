@@ -16,8 +16,6 @@ const connectionOptions = {
 };
 
 const db = pgp(connectionOptions);
-// Resto del código...
-
 const app = express();
 const saltRounds = 10;
 
@@ -25,36 +23,6 @@ app.use(express.json());
 app.use(cookieParser('mi secreto'));
 app.use(express.static('public'));
 
-
-
-
-bcrypt.hash('soyunbuenadmin', saltRounds, function(err, hash) {
-        if (err) {
-            console.error(err);
-        } else {
-            console.log('Contraseña encriptada:', hash);
-
-      db.none(`INSERT INTO Users(username, password) 
-              SELECT 'admin', '${hash}' 
-              WHERE NOT EXISTS(SELECT 1 FROM Users WHERE username = 'admin')`);
-            }
-    });
-    
-    db.none(`CREATE TABLE IF NOT EXISTS Trivial (
-          question TEXT PRIMARY KEY,
-          answer TEXT,
-          type TEXT,
-          difficulty TEXT
-      )`);
-
-    db.none(`INSERT INTO Trivial(question, answer, type, difficulty) VALUES 
-        ('¿Cuál es la capital de España?', 'Madrid', 'Geografía', 'facil'), 
-        ('¿Quién escribió "Don Quijote de la Mancha"?', 'Miguel de Cervantes', 'Arte y Literatura', 'facil'),
-        ('¿Cuál es el elemento químico de la tabla periódica con el símbolo K?', 'Potasio', 'Ciencia y Naturaleza', 'facil'),
-        ('¿Quién es el autor de la teoría de la relatividad?', 'Albert Einstein', 'Historia', 'facil'),
-        ('¿En qué ciudad se celebraron los Juegos Olímpicos de verano de 2016?', 'Río de Janeiro', 'Deportes y Pasatiempos', 'facil'),
-        ('¿Quién interpretó a Jack Dawson en la película "Titanic"?', 'Leonardo DiCaprio', 'Entretenimiento', 'facil')`);
-  
 
 app.use('/', express.static('public'));
 

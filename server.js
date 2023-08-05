@@ -1,7 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const cookieParser = require('cookie-parser');
-
 const pgp = require('pg-promise')();
 
 const connectionOptions = {
@@ -24,33 +23,67 @@ app.use(cookieParser('mi secreto'));
 app.use(express.static('public'));
 
 
+
 app.use('/', express.static('public'));
 
-app.post('/login', function(req, res) {
-    db.get('SELECT * FROM users WHERE username = ?', [req.body.username], function(err, row) {
-        if (row && bcrypt.compareSync(req.body.password, row.password)) {
-            res.cookie('username', row.username, {signed: true});
-            if (row.username === 'admin') {
-                res.status(200).json({admin: true});
-            } else {
-                res.status(200).json({admin: false});
-            }
-        } else {
-            res.status(403).send();
-        }
-    });
-});
+app.post('/login', async function(req, res) {
+    try {
+      const username = req.body.username;
+      const password = req.body.password;
+  
+      // Verifica que la conexión a la base de datos (db) esté configurada y creada correctamente
+  
+      // Utiliza una consulta preparada para evitar inyecciones SQL
+      const user = await db.oneOrNone('SELECT * FROM public.users WHERE username = $1', [username]);
+  
+      if (!user) {
+        return res.status(403).send(); // Usuario no encontrado
+      }
 
-app.post('/register', function(req, res) {
-    let hashedPassword = bcrypt.hashSync(req.body.password, saltRounds);
-    db.none('INSERT INTO users (username, password) VALUES (?, ?)', [req.body.username, hashedPassword], function(err) {
-        if (err) {
-            res.status(500).send();
+      // Verifica la contraseña utilizando bcrypt
+      if (bcrypt.compareSync(password, user.password)) {
+        res.cookie('username', user.username, { signed: true });
+        if (user.username === 'admin') {
+          return res.status(200).json({ admin: true });
         } else {
-            res.status(200).send();
+          return res.status(200).json({ admin: false });
         }
-    });
-});
+      } else {
+        return res.status(403).send(); // Contraseña incorrecta
+      }
+    } catch (err) {
+      console.error('Error al consultar la base de datos:', err);
+      return res.status(500).send(); // Error en el servidor
+    }
+  });
+
+
+  app.post('/register', async function(req, res) {
+    try {
+      const username = req.body.username;
+      const password = req.body.password;
+  
+      // Verifica que la conexión a la base de datos (db) esté configurada y creada correctamente
+  
+      // Verifica si el usuario ya existe en la base de datos
+      const existingUser = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username]);
+      if (existingUser) {
+        return res.status(409).json({ error: 'El nombre de usuario ya está registrado' });
+      }
+  
+      // Hash de la contraseña utilizando bcrypt
+      const hashedPassword = bcrypt.hashSync(password, saltRounds);
+  
+      // Inserta el nuevo usuario en la base de datos
+      await db.none('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hashedPassword]);
+  
+      return res.status(200).json({ message: 'Usuario registrado exitosamente' });
+    } catch (err) {
+      console.error('Error al registrar el usuario:', err);
+      return res.status(500).json({ error: 'Error al registrar el usuario' });
+    }
+  });
+
 
 app.get('/logout', function(req, res) {
     res.clearCookie('username');

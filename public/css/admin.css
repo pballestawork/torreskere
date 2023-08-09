@@ -1,6 +1,6 @@
 body {
     font-family: Arial;
-    display: flex;
+    display: block;
     justify-content: center;
     align-items: center;
     height: 100vh;
@@ -15,4 +15,8 @@ body {
 }
 .logout-button {
     background-color: lightcoral;
+}
+
+h1{
+    display: block;
 }

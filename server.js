@@ -3,6 +3,10 @@ const bcrypt = require('bcrypt');
 const cookieParser = require('cookie-parser');
 const pgp = require('pg-promise')();
 
+//Para uso de websockets
+const http = require('http');
+const setupWebSockets = require('./websockets.js');
+
 //credenciales para la bd
 const connectionOptions = {
   host: 'dpg-cj0ma7p8g3n9bruviqf0-a.frankfurt-postgres.render.com',
@@ -17,7 +21,10 @@ const connectionOptions = {
 
 const db = pgp(connectionOptions);
 const app = express();
+const server = http.createServer(app);
 const saltRounds = 10;
+
+
 
 /*
 El middleware actua de manera secuencial. 
@@ -27,6 +34,9 @@ El middleware actua de manera secuencial.
 */
 app.use(express.json());
 app.use(cookieParser('mi secreto'));
+//Manejo de websockets
+setupWebSockets(server);
+
 
 // Middleware para permitir el acceso a recursos básicos
 // Si tienes username pasas al siguiente acceso
@@ -51,6 +61,7 @@ app.use(['/admin.html','/register'], (req, res, next) => {
   }
 });
 
+
 app.use(express.static('public'));//En este punto cualquier cliente tiene acceso a todos los recursos
 
 app.post('/login', async function(req, res) {
@@ -69,8 +80,8 @@ app.post('/login', async function(req, res) {
     // Verifica la contraseña utilizando bcrypt
   if (bcrypt.compareSync(password, user.password)) {
     //httpOnly true -> que no se pueden acceder a cookies mediante javascript. Lo desactivamos de momento.
-      res.cookie('usernameCookie', user.username, { httpOnly:false,signed: true});
-      res.cookie('adminCookie', user.username === 'admin', { httpOnly:false,signed: true});
+      res.cookie('usernameCookie', user.username, { httpOnly:false,signed: true,expires: 0 });
+      res.cookie('adminCookie', user.username === 'admin', { httpOnly:false,signed: true,expires: 0});
       return res.status(200).send('Inicio de sesión exitoso');
   } else {
       return res.status(403).send('Contraseña incorrecta');
@@ -124,6 +135,6 @@ app.post('/register', async function(req, res) {
     }
 });
 
-app.listen(3000, function() {
+server.listen(3000, function() {
     console.log('Server listening on port 3000');
 });
